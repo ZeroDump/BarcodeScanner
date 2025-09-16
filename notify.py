@@ -21,14 +21,13 @@ df = db_run_query("SELECT product_name, expiry_date FROM products;")
 # Get "today" in EST (handles EDT in summer automatically)
 today = datetime.now(ZoneInfo("America/New_York")).date()
 today = datetime.today().date()
-tomorrow = today + timedelta(days=1)
-threshold = today + timedelta(days=3)
+threshold = today + timedelta(days=2)
 
 # Ensure expiry_date is a date
 df["expiry_date"] = pd.to_datetime(df["expiry_date"]).dt.date
 
 # Filter between tomorrow and threshold
-expiring_soon = df[(df["expiry_date"] >= tomorrow) & (df["expiry_date"] <= threshold)]
+expiring_soon = df[(df["expiry_date"] >= today) & (df["expiry_date"] <= threshold)]
 
 # --- Create CSV directly in memory ---
 csv_buffer = io.StringIO()
