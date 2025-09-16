@@ -90,4 +90,3 @@ def livescan():
     if st.button("Logout"):
         st.session_state.clear()
         st.session_state["page"] = "login"
-        st.experimental_rerun()
