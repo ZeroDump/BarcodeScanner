@@ -207,3 +207,10 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+email_secrets.py
+"email_secrets.py" 
+
+test.py
+"test.py"
+.streamlit/
+secrets.toml
