@@ -46,7 +46,7 @@ def send_expiry_email():
 
     # --- Fetch products from DB ---
     try:
-        df = db_run_query("SELECT product_name, expiry_date FROM products;")
+        df = db_run_query("SELECT barcode, brand, product_name, quantity, product_count, expiry_date FROM products ORDER BY expiry_date;")
     except Exception as e:
         msg = f"❌ Failed to fetch products: {e}"
         if USING_STREAMLIT:
