@@ -38,7 +38,7 @@ csv_bytes = csv_buffer.getvalue().encode("utf-8")
 if not expiring_soon.empty:
     tomorrow = (datetime.today() + timedelta(days=1)).strftime("%Y-%m-%d")
     msg = EmailMessage()
-    msg["Subject"] = f"📦 Products Expiring soon! {tomorrow}"
+    msg["Subject"] = f"📦 Products Expiring soon! {today}"
     msg['From'] = EMAIL_ADDRESS
     msg['To'] = ", ".join(RECIPIENTS)
 

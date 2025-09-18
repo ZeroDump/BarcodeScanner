@@ -60,11 +60,14 @@ def livescan():
             # --- Expiry Date Input ---
             expiry_date = st.date_input("📅 Enter expiry date", min_value=date.today())
 
+            # --- Product Count Input ---
+            product_count = st.number_input("📦 Enter product count", min_value=1, step=1)
+
             # --- Save to DB ---
             if st.button("💾 Save to Database"):
                 insert_query = """
-                    INSERT INTO products (barcode, product_name, expiry_date, created_at)
-                    VALUES (%s, %s, %s, %s);
+                    INSERT INTO products (barcode, product_name, brand, quantity, expiry_date, created_at)
+                    VALUES (%s, %s, %s, %s, %s, %s);
                 """
                 db_run_query(insert_query, params=(
                     barcode_data,
