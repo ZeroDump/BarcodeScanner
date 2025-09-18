@@ -15,7 +15,7 @@ EMAIL_PASSWORD = os.environ['EMAIL_PASSWORD']
 RECIPIENTS = os.environ['RECIPIENTS'].split(',')  # comma-separated list
 
 # Query the database ---
-df = db_run_query("SELECT product_name, expiry_date FROM products;")
+df = db_run_query("SELECT barcode, brand, product_name, quantity, product_count, expiry_date FROM products ORDER BY expiry_date;")
 
 # Process data
 # Get "today" in EST (handles EDT in summer automatically)

@@ -66,7 +66,7 @@ def livescan():
             # --- Save to DB ---
             if st.button("💾 Save to Database"):
                 insert_query = """
-                    INSERT INTO products (barcode, product_name, brand, quantity, expiry_date, created_at)
+                    INSERT INTO products (barcode, product_name, brand, quantity, product_count, expiry_date, created_at)
                     VALUES (%s, %s, %s, %s, %s, %s);
                 """
                 db_run_query(insert_query, params=(
