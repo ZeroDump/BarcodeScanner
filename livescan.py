@@ -12,11 +12,10 @@ def livescan():
     # ----------------- Camera Input -----------------
     img_file = st.camera_input("Take a picture of the barcode")
 
-    # Always reset cache when new photo is taken (or cleared)
-    if "last_photo" not in st.session_state or img_file != st.session_state.last_photo:
-        for key in ["barcode_data", "product_name", "brand", "quantity"]:
-            st.session_state.pop(key, None)
-        st.session_state.last_photo = img_file  # keep track of current photo
+    # Reset cache only when the photo changes (new or cleared)
+    if img_file != st.session_state.get("last_photo", None):
+        st.session_state.clear()  # clear everything
+        st.session_state.last_photo = img_file
 
     if img_file:
         if "barcode_data" not in st.session_state:
