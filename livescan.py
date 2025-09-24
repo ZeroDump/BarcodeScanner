@@ -67,15 +67,23 @@ def livescan():
             if st.button("💾 Save to Database"):
                 insert_query = """
                     INSERT INTO products (barcode, product_name, brand, quantity, product_count, expiry_date, created_at)
-                    VALUES (%s, %s, %s, %s, %s, %s);
+                    VALUES (%s, %s, %s, %s, %s, %s, %s);
                 """
                 db_run_query(insert_query, params=(
                     barcode_data,
                     st.session_state.product_name,
-                    str(expiry_date),
+                    st.session_state.brand,       # 👈 make sure you collected brand
+                    st.session_state.quantity,    # 👈 make sure you collected quantity
+                    product_count,
+                    expiry_date,
                     datetime.now()
                 ))
                 st.success("✅ Product saved to database!")
+
+                # --- Reset state for next scan ---
+                for key in ["barcode_data", "product_name", "brand", "quantity"]:
+                    if key in st.session_state:
+                        del st.session_state[key]
 
     # ----------------- Show Database -----------------
     if st.checkbox("📑 Show saved records"):
