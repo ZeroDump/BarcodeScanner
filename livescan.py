@@ -85,6 +85,9 @@ def livescan():
                     if key in st.session_state:
                         del st.session_state[key]
 
+                # --- Force UI refresh ---
+                st.rerun()
+
     # ----------------- Show Database -----------------
     if st.checkbox("📑 Show saved records"):
         df = db_run_query("SELECT * FROM products ORDER BY created_at DESC;")
