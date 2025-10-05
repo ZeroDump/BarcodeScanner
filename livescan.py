@@ -14,7 +14,9 @@ def livescan():
 
     # Reset cache only when the photo changes (new or cleared)
     if img_file != st.session_state.get("last_photo", None):
-        st.session_state.clear()  # clear everything
+        # Only clear keys related to scanning
+        for key in ["barcode_data", "product_name", "brand", "quantity"]:
+            st.session_state.pop(key, None)
         st.session_state.last_photo = img_file
 
     if img_file:
