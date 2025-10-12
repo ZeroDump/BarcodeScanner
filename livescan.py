@@ -4,24 +4,47 @@ def livescan():
     import numpy as np
     import requests
     from datetime import datetime, date
-    from config import db_run_query  # 👈 your DB helper
-    from Manual_trigger import send_expiry_email  # 👈 reuse email function
+    from config import db_run_query
+    from Manual_trigger import send_expiry_email
+    from login_supabase import supabase
 
     st.title("📷 Grocery Barcode Scanner (Cloud-Friendly with DB)")
+
+    # ----------------- Display User & Store -----------------
+    if "user" in st.session_state:
+        user_id = st.session_state.user.id  # UID from Supabase
+
+        # Fetch user profile
+        profile_res = supabase.table("user_profiles").select("name, store_id").eq("user_id", user_id).execute()
+        if profile_res.data:
+            profile = profile_res.data[0]
+            name = profile.get("name", "Unknown User")
+            store_id = profile.get("store_id", None)
+
+            # Fetch store name
+            store_res = supabase.table("stores").select("store_name").eq("store_id", store_id).execute()
+            store_name = store_res.data[0]["store_name"] if store_res.data else "Unknown Store"
+
+            st.subheader(f"Welcome, {name}!")
+            st.write(f"🏬 Store: {store_name}")
+        else:
+            st.warning("⚠️ User profile not found.")
+    else:
+        st.warning("⚠️ Please log in first.")
+        return  # Stop here if user not logged in
 
     # ----------------- Camera Input -----------------
     img_file = st.camera_input("Take a picture of the barcode")
 
     # Reset cache only when the photo changes (new or cleared)
     if img_file != st.session_state.get("last_photo", None):
-        # Only clear keys related to scanning
         for key in ["barcode_data", "product_name", "brand", "quantity"]:
             st.session_state.pop(key, None)
         st.session_state.last_photo = img_file
 
+    # ----------------- Barcode Processing -----------------
     if img_file:
         if "barcode_data" not in st.session_state:
-            # Convert image to OpenCV format
             file_bytes = np.asarray(bytearray(img_file.getvalue()), dtype=np.uint8)
             frame = cv2.imdecode(file_bytes, 1)
             is_success, buffer = cv2.imencode(".jpg", frame)
@@ -43,7 +66,6 @@ def livescan():
             barcode_data = st.session_state.barcode_data
             st.success(f"✅ Detected barcode: {barcode_data}")
 
-            # --- OpenFoodFacts API ---
             if "product_name" not in st.session_state:
                 url = f"https://world.openfoodfacts.org/api/v0/product/{barcode_data}.json"
                 try:
@@ -64,13 +86,9 @@ def livescan():
             st.write(f"**Brand:** {st.session_state.brand}")
             st.write(f"**Quantity:** {st.session_state.quantity}")
 
-            # --- Expiry Date Input ---
             expiry_date = st.date_input("📅 Enter expiry date", min_value=date.today())
-
-            # --- Product Count Input ---
             product_count = st.number_input("📦 Enter product count", min_value=1, step=1)
 
-            # --- Save to DB ---
             if st.button("💾 Save to Database"):
                 insert_query = """
                     INSERT INTO products (barcode, product_name, brand, quantity, product_count, expiry_date, created_at)
@@ -79,20 +97,18 @@ def livescan():
                 db_run_query(insert_query, params=(
                     barcode_data,
                     st.session_state.product_name,
-                    st.session_state.brand,       # 👈 make sure you collected brand
-                    st.session_state.quantity,    # 👈 make sure you collected quantity
+                    st.session_state.brand,
+                    st.session_state.quantity,
                     product_count,
                     expiry_date,
                     datetime.now()
                 ))
                 st.success("✅ Product saved to database!")
 
-                # --- Reset state for next scan ---
+                # Reset state
                 for key in ["barcode_data", "product_name", "brand", "quantity"]:
-                    if key in st.session_state:
-                        del st.session_state[key]
+                    st.session_state.pop(key, None)
 
-                # --- Force UI refresh ---
                 st.rerun()
 
     # ----------------- Show Database -----------------
@@ -103,7 +119,6 @@ def livescan():
         else:
             st.info("No products saved yet.")
 
-    # --- Streamlit button ---
     if st.button("📧 Send Expiry Email Now"):
         send_expiry_email()
         st.success("✅ Expiry email triggered!")
