@@ -8,8 +8,6 @@ def livescan():
     from Manual_trigger import send_expiry_email
     from login_supabase import supabase
 
-    st.title("📷 Grocery Barcode Scanner (Cloud-Friendly with DB)")
-
     # ----------------- Display User & Store -----------------
     if "user" in st.session_state:
         user_id = st.session_state.user.id  # UID from Supabase
@@ -25,8 +23,8 @@ def livescan():
             store_res = supabase.table("stores").select("store_name").eq("store_id", store_id).execute()
             store_name = store_res.data[0]["store_name"] if store_res.data else "Unknown Store"
 
+            st.title(f"🏬 Store: {store_name}")
             st.subheader(f"Welcome, {name}!")
-            st.write(f"🏬 Store: {store_name}")
         else:
             st.warning("⚠️ User profile not found.")
     else:
@@ -90,9 +88,25 @@ def livescan():
             product_count = st.number_input("📦 Enter product count", min_value=1, step=1)
 
             if st.button("💾 Save to Database"):
+                # --- Fetch user and store info ---
+                user_id = st.session_state.user.id
+
+                # Get user details (name, store_id)
+                profile_res = supabase.table("user_profiles").select("name, store_id").eq("user_id", user_id).execute()
+                if not profile_res.data:
+                    st.error("User profile not found — cannot save product.")
+                    return
+
+                profile = profile_res.data[0]
+                user_name = profile.get("name")
+                store_id = profile.get("store_id")
+
+                # Get store name
+                store_res = supabase.table("stores").select("store_name").eq("store_id", store_id).execute()
+                store_name = store_res.data[0]["store_name"] if store_res.data else "Unknown Store"
                 insert_query = """
-                    INSERT INTO products (barcode, product_name, brand, quantity, product_count, expiry_date, created_at)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s);
+                    INSERT INTO products (barcode, product_name, brand, quantity, product_count, expiry_date, created_at, user_id, user_name, store_id, store_name)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
                 """
                 db_run_query(insert_query, params=(
                     barcode_data,
@@ -101,9 +115,13 @@ def livescan():
                     st.session_state.quantity,
                     product_count,
                     expiry_date,
-                    datetime.now()
+                    datetime.now(),
+                    user_id,
+                    user_name,
+                    store_id,
+                    store_name
                 ))
-                st.success("✅ Product saved to database!")
+                st.success(f"✅ Product saved for {store_name} by {user_name}!")
 
                 # Reset state
                 for key in ["barcode_data", "product_name", "brand", "quantity"]:
@@ -113,11 +131,12 @@ def livescan():
 
     # ----------------- Show Database -----------------
     if st.checkbox("📑 Show saved records"):
-        df = db_run_query("SELECT * FROM products ORDER BY created_at DESC;")
+        df = db_run_query("SELECT product_name, brand, quantity, product_count, expiry_date, store_name, user_name, user_id FROM products ORDER BY created_at DESC;")
         if not df.empty:
             st.dataframe(df)
         else:
             st.info("No products saved yet.")
+
 
     if st.button("📧 Send Expiry Email Now"):
         send_expiry_email()
