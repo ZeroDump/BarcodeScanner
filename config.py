@@ -6,6 +6,8 @@ import pandas as pd
 load_dotenv()
 
 def db_run_query(query, params=None):
+    connection = None
+    cur = None
     try:
         connection = psycopg2.connect(
             user=os.getenv("DB_USER"),
@@ -15,24 +17,26 @@ def db_run_query(query, params=None):
             dbname=os.getenv("DB_NAME", "postgres")
         )
         cur = connection.cursor()
-        
-        # Determine query type
+
         if query.strip().lower().startswith("select"):
-            # For SELECT, return DataFrame
-            df = pd.read_sql(query, connection, params=params)
+            cur.execute(query, params)
+            rows = cur.fetchall()
+            columns = [desc[0] for desc in cur.description]
+            df = pd.DataFrame(rows, columns=columns)
             return df
         else:
-            # For INSERT/UPDATE/DELETE
             cur.execute(query, params)
-            connection.commit()  # Important! Save changes
+            connection.commit()
             return None
 
     except Exception as e:
-        print(f"Query failed: {e}")
-        return pd.DataFrame() if query.strip().lower().startswith("select") else None
+        print(f"❌ Query failed: {e}")
+        if query.strip().lower().startswith("select"):
+            return pd.DataFrame()
+        return None
 
     finally:
-        if 'cur' in locals() and cur:
+        if cur:
             cur.close()
-        if 'connection' in locals() and connection:
+        if connection:
             connection.close()

@@ -24,7 +24,7 @@ def livescan():
             store_name = store_res.data[0]["store_name"] if store_res.data else "Unknown Store"
 
             st.title(f"🏬 Store: {store_name}")
-            st.subheader(f"Welcome, {name}!")
+            st.header(f"Welcome, {name}!")
         else:
             st.warning("⚠️ User profile not found.")
     else:
