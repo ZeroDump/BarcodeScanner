@@ -18,6 +18,10 @@ def db_run_query(query, params=None):
         )
         cur = connection.cursor()
 
+        # 🧾 DEBUG: show the query and params before executing
+        print("🧾 Running query:")
+        print(query)
+        print("📦 Params:", params)
         if query.strip().lower().startswith("select"):
             cur.execute(query, params)
             rows = cur.fetchall()
